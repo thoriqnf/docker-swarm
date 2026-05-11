@@ -1,69 +1,101 @@
-# 🐳 Phase 1: Local Foundations (Raw Docker Compose)
+# 🐳 Phase 2: Swarm Initialization (Raw CLI)
 
-In Phase 1, we ensure the Laravel 12 application is perfectly containerized and working locally before we touch Swarm. 
+In Phase 2, we transition from a single-machine Compose setup to a **Docker Swarm Cluster**. We will initialize the cluster manually and deploy our first "Stack".
 
-Instead of using automation, we will run the **standard Docker Compose commands** to understand exactly how the services are stitched together.
+## 🚀 1. Initialize the Swarm
 
-## 🚀 1. Start the Stack
-
-Run the following command to build and start the containers in the background:
+On your primary node (Manager), run:
 
 ```bash
-docker compose up -d
+docker swarm init
 ```
 
-> [!IMPORTANT]
-> Always run `docker compose` commands from the **project root**. Running them from subdirectories (like `docker/`) can lead to "Name does not resolve" errors because the network context and project names might mismatch.
+> [!TIP]
+> If you get an error saying "This node is already part of a swarm", you can reset it by running:
+> `docker swarm leave --force`
 
-### What's happening?
-- **Build**: Docker builds the multi-stage PHP image from `docker/php/Dockerfile`.
-- **Network**: A bridge network is created.
-- **Volumes**: Local source code is mounted for real-time development.
+### Note for Multi-Node
+If you have multiple nodes, run the `join` command provided by the output above on your worker nodes. You can always get the join token again using:
+```bash
+docker swarm join-token worker
+```
 
-## 🔑 2. Initial Setup
+> [!NOTE]
+> **What is a Multi-Node cluster?**
+> In a production setup, you would have separate physical or virtual machines. By running the `join` command on other machines, they connect to this Manager over the network. 
+> - **Manager**: The brain that handles deployments.
+> - **Worker**: The muscle that just runs the containers.
+> Once joined, Swarm will automatically balance your `replicas` across all these machines.
 
-Once the containers are up, we need to run the standard Laravel setup commands inside the app container:
+## 📦 2. Deploy the Stack
+
+Unlike `docker compose up`, Swarm uses `stack deploy`. We use the `docker-compose.swarm.yml` file which contains Swarm-specific configurations like `replicas` and `placement constraints`.
 
 ```bash
-# Run migrations and seed data
-docker compose exec app php artisan migrate:fresh --seed
+# Deploy the stack named 'todo'
+docker stack deploy -c docker-compose.swarm.yml todo
 ```
 
-### Credentials
-- **Email**: `demo@example.com`
-- **Password**: `password`
+## 🔍 3. Inspecting the Cluster
 
-## 🎓 3. Manual Health Check
-
-Instead of a script, we can check the app health using `curl` or by visiting the URL:
+This is where the live demo gets interesting. Use these commands to see how Swarm manages your services:
 
 ```bash
-# Check the JSON health endpoint
-curl -s http://localhost/health
+# List all services in the stack
+docker stack services todo
+
+# List all tasks (containers) and see which node they are running on
+docker stack ps todo
+
+# List all nodes in the cluster
+docker node ls
+
+# Debug a failing service (Live Demo Tip)
+docker service logs -f todo_nginx
 ```
 
-You should see a response like:
-```json
-{
-    "status": "ok",
-    "services": {
-        "database": "connected",
-        "redis": "connected"
-    },
-    "hostname": "container_id"
-}
-```
+---
+
+## 🧠 3. Understanding the "Cluster"
+
+Since you are running on **Docker Desktop**, you currently have a **1-node cluster**. In a real-world scenario (like AWS or DigitalOcean), you would see multiple lines here.
+
+### 1. The Manager vs. Worker Roles
+- **Manager (Leader)**: The "brain." It keeps the desired state (e.g., "I want 2 apps running").
+- **Worker**: The "muscle." It just runs the containers. 
+- *Note*: In single-node setups, your Manager also acts as a Worker.
+
+### 2. How to read `docker node ls`
+Look at the **MANAGER STATUS** column:
+- `Leader`: This node is in charge.
+- `Reachable`: This node is a backup manager.
+- `(empty)`: This is a pure worker node.
+
+### 3. How to read `docker stack ps todo`
+This is the most important command for the "Live Demo" feel. Look at the **NODE** column:
+- It tells you exactly **which computer** is currently running that specific container.
+- If a node fails, you will see Swarm automatically move the task to a different node in this list.
+
+---
+
+## 🛠️ Troubleshooting: "Why are my services failing?"
+If you see `Failed` or `exit (1)` in your `docker stack ps` output:
+1. **Image Name**: Ensure you have an image tagged as `thorthedev/todo-swarm-app:latest`. Swarm needs a specific image name to pull/use.
+2. **Volumes**: Swarm is strict with relative paths. Ensure you are running the command from the **project root**.
 
 ## 🛠️ Summary of Raw Commands
 
 | Action | Command |
 |--------|---------|
-| Start  | `docker compose up -d` |
-| Stop   | `docker compose down` |
-| Setup  | `docker compose exec app php artisan migrate:fresh --seed` |
-| Logs   | `docker compose logs -f` |
-| Shell  | `docker compose exec app sh` |
+| Init Swarm | `docker swarm init` |
+| Leave Swarm | `docker swarm leave --force` |
+| Deploy Stack | `docker stack deploy -c docker-compose.swarm.yml todo` |
+| List Services | `docker stack services todo` |
+| List Tasks | `docker stack ps todo` |
+| Service Logs | `docker service logs -f <service_name>` |
+| List Nodes | `docker node ls` |
+| Remove Stack | `docker stack rm todo` |
 
 ---
 
-> **Next Step**: Move to branch **`phase-2`** to initialize the Swarm cluster manually.
+> **Next Step**: Move to branch **`phase-3`** to handle Secrets manually.
