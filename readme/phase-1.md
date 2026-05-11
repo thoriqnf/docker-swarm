@@ -1,26 +1,53 @@
-# 🐳 Laravel Todo — Docker Swarm Demo
+# 🐳 Phase 1: Local Development (Docker Compose)
 
-A Laravel 12 Todo CRUD app built to demonstrate Docker and Docker Swarm deployment from scratch.
+The goal of Phase 1 is to ensure the Laravel application and its infrastructure (MySQL, Redis, Nginx, Horizon) are working perfectly in a containerized environment before we move to Swarm.
 
-## Quick Start (Phase 1 — Docker Compose)
+## 🚀 Getting Started
 
 ```bash
-# 1. Copy and configure environment
-cp .env.example .env   # already exists as .env
+# 1. Start the stack
+# We've already built and fixed the images, so just start it:
+docker compose up -d
 
-# 2. Build & start all services
-docker compose up -d --build
+# 2. Seed the data (MANDATORY for first-time setup)
+# This creates the demo user and sample todos.
+docker compose exec app php artisan migrate:fresh --seed
 
-# 3. Run migrations & seed demo data
-docker compose exec app php artisan migrate --seed
-
-# 4. Open the app
-open http://localhost
-
-# 5. Login with demo credentials
-#    Email:    demo@example.com
-#    Password: password
+# 3. Access the App
+# Open: http://localhost
 ```
+
+## 🔑 Login Credentials
+
+Use these credentials to access the dashboard after seeding:
+
+- **Email**: `demo@example.com`
+- **Password**: `password`
+
+---
+
+## 🎓 Phase 1 Walkthrough (How to Test)
+
+To verify that the Docker stack is fully operational, follow these steps:
+
+### 1. Database Connectivity (MySQL)
+- **Action**: Log in and create a new Todo item.
+- **Verification**: If the Todo appears in the list and persists after a page refresh, the **Laravel ↔ MySQL** connection is stable.
+
+### 2. Queue & Background Jobs (Redis + Horizon)
+- **Action**: Go to [http://localhost/horizon](http://localhost/horizon). 
+- **Action**: Create a Todo in the main app.
+- **Verification**: Check the "Completed Jobs" tab in Horizon. You should see a `SendTodoCreatedNotification` job. This proves **Redis** is working as a queue broker and **Horizon** is successfully consuming jobs.
+
+### 3. Health & Environment (Centralized)
+- **Action**: Visit [http://localhost/health](http://localhost/health).
+- **Verification**: You should see a JSON response showing `ok` for both DB and Redis. Note the `hostname` field—in Phase 1, this will be the container ID of the app. In Phase 2 (Swarm), this will change as you load balance across nodes.
+
+### 4. Cache Performance
+- **Action**: The Todo list is cached for 60 seconds.
+- **Verification**: Try creating a Todo and then check the Redis logs (`docker compose logs redis`). You'll see the activity.
+
+---
 
 ## Services
 

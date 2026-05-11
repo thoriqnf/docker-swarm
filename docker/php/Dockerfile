@@ -13,7 +13,8 @@ RUN composer install \
     --no-plugins \
     --no-scripts \
     --prefer-dist \
-    --optimize-autoloader
+    --optimize-autoloader \
+    --ignore-platform-reqs
 
 # Copy full src to run post-install scripts (breeze/horizon discovery)
 COPY src .
@@ -35,7 +36,7 @@ RUN npm run build
 # =============================================================
 # Stage 3: Final PHP-FPM production image
 # =============================================================
-FROM php:8.3-fpm-alpine AS app
+FROM php:8.4-fpm-alpine AS app
 
 LABEL maintainer="docker-swarm-demo"
 LABEL org.opencontainers.image.title="Laravel Todo App"
@@ -93,7 +94,7 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # ---- Health check ----
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost/health || exit 1
+    CMD nc -z localhost 9000 || exit 1
 
 EXPOSE 9000
 
