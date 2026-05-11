@@ -47,7 +47,12 @@ docker ps
 # 2. Kill it!
 docker kill <CONTAINER_ID>
 
-# 3. Check the service status immediately
+# 3. Watch the Magic!
+# Swarm will detect the 'failure' and immediately start a new container.
+# In a separate terminal, you can watch the logs to see it boot up:
+docker service logs -f todo_app
+
+# 4. Check the service status immediately
 docker stack ps todo
 ```
 *You will see the old container marked as `Failed` and a brand new one already `Running` to replace it.*
