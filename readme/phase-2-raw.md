@@ -42,6 +42,9 @@ docker stack ps todo
 
 # List all nodes in the cluster
 docker node ls
+
+# Debug a failing service (Live Demo Tip)
+docker service logs -f todo_nginx
 ```
 
 ---
@@ -82,6 +85,7 @@ If you see `Failed` or `exit (1)` in your `docker stack ps` output:
 | Deploy Stack | `docker stack deploy -c docker-compose.swarm.yml todo` |
 | List Services | `docker stack services todo` |
 | List Tasks | `docker stack ps todo` |
+| Service Logs | `docker service logs -f <service_name>` |
 | List Nodes | `docker node ls` |
 | Remove Stack | `docker stack rm todo` |
 
