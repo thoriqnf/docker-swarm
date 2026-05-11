@@ -20,6 +20,13 @@ If you have multiple nodes, run the `join` command provided by the output above 
 docker swarm join-token worker
 ```
 
+> [!NOTE]
+> **What is a Multi-Node cluster?**
+> In a production setup, you would have separate physical or virtual machines. By running the `join` command on other machines, they connect to this Manager over the network. 
+> - **Manager**: The brain that handles deployments.
+> - **Worker**: The muscle that just runs the containers.
+> Once joined, Swarm will automatically balance your `replicas` across all these machines.
+
 ## 📦 2. Deploy the Stack
 
 Unlike `docker compose up`, Swarm uses `stack deploy`. We use the `docker-compose.swarm.yml` file which contains Swarm-specific configurations like `replicas` and `placement constraints`.
