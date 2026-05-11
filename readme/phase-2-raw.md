@@ -80,7 +80,7 @@ This is the most important command for the "Live Demo" feel. Look at the **NODE*
 
 ## 🛠️ Troubleshooting: "Why are my services failing?"
 If you see `Failed` or `exit (1)` in your `docker stack ps` output:
-1. **Image Name**: Ensure you have an image tagged as `yourusername/todo-swarm-app:latest`. Swarm needs a specific image name to pull/use.
+1. **Image Name**: Ensure you have an image tagged as `thorthedev/todo-swarm-app:latest`. Swarm needs a specific image name to pull/use.
 2. **Volumes**: Swarm is strict with relative paths. Ensure you are running the command from the **project root**.
 
 ## 🛠️ Summary of Raw Commands

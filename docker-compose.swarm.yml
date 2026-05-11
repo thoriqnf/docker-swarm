@@ -33,7 +33,7 @@ services:
   # PHP-FPM — Application
   # ----------------------------------------------------------
   app:
-    image: ${DOCKER_HUB_USER:-yourusername}/${IMAGE_NAME:-todo-swarm-app}:latest
+    image: ${DOCKER_HUB_USER:-thorthedev}/${IMAGE_NAME:-todo-swarm-app}:latest
     environment:
       APP_NAME: "Todo Swarm"
       APP_ENV: production
@@ -116,7 +116,7 @@ services:
   # Horizon — Queue Worker
   # ----------------------------------------------------------
   horizon:
-    image: ${DOCKER_HUB_USER:-yourusername}/${IMAGE_NAME:-todo-swarm-app}:latest
+    image: ${DOCKER_HUB_USER:-thorthedev}/${IMAGE_NAME:-todo-swarm-app}:latest
     command: php artisan horizon
     environment:
       APP_ENV: production
