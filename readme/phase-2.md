@@ -66,4 +66,4 @@ You should see a response like:
 
 ---
 
-> **Next Step**: Move to branch **`phase-2-raw`** to initialize the Swarm cluster manually.
+> **Next Step**: Move to branch **`phase-2`** to initialize the Swarm cluster manually.
