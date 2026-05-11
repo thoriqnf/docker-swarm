@@ -52,13 +52,24 @@ docker stack ps todo
 ```
 *You will see the old container marked as `Failed` and a brand new one already `Running` to replace it.*
 
-## ⚖️ 4. Promoting Workers
+## 🎖️ 3. Changing Roles (Promote/Demote)
 
-Promote a worker to a manager to increase the cluster's fault tolerance:
+In a resilient cluster, you want multiple **Managers** so that if one fails, the cluster keeps running (Raft Consensus).
 
+### Promote a Worker to Manager
+Turn a "muscle" node into a "brain" node:
 ```bash
 docker node promote <NODE_NAME>
 ```
+
+### Demote a Manager to Worker
+If a node is no longer needed for management, turn it back into a pure worker:
+```bash
+docker node demote <NODE_NAME>
+```
+
+> [!TIP]
+> Use `docker node ls` after these commands to see the **MANAGER STATUS** column change!
 
 ## 🛠️ Summary of Raw Commands
 
