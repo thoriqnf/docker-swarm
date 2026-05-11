@@ -1,0 +1,15 @@
+.env
+.env.*.local
+*.log
+.DS_Store
+src/vendor/
+src/node_modules/
+src/public/build/
+src/storage/logs/*
+!src/storage/logs/.gitkeep
+src/storage/framework/cache/*
+!src/storage/framework/cache/.gitkeep
+src/storage/framework/sessions/*
+!src/storage/framework/sessions/.gitkeep
+src/storage/framework/views/*
+!src/storage/framework/views/.gitkeep
