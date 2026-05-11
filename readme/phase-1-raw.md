@@ -12,6 +12,9 @@ Run the following command to build and start the containers in the background:
 docker compose up -d
 ```
 
+> [!IMPORTANT]
+> Always run `docker compose` commands from the **project root**. Running them from subdirectories (like `docker/`) can lead to "Name does not resolve" errors because the network context and project names might mismatch.
+
 ### What's happening?
 - **Build**: Docker builds the multi-stage PHP image from `docker/php/Dockerfile`.
 - **Network**: A bridge network is created.
