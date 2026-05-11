@@ -10,6 +10,10 @@ On your primary node (Manager), run:
 docker swarm init
 ```
 
+> [!TIP]
+> If you get an error saying "This node is already part of a swarm", you can reset it by running:
+> `docker swarm leave --force`
+
 ### Note for Multi-Node
 If you have multiple nodes, run the `join` command provided by the output above on your worker nodes. You can always get the join token again using:
 ```bash
@@ -45,6 +49,7 @@ docker node ls
 | Action | Command |
 |--------|---------|
 | Init Swarm | `docker swarm init` |
+| Leave Swarm | `docker swarm leave --force` |
 | Deploy Stack | `docker stack deploy -c docker-compose.swarm.yml todo` |
 | List Services | `docker stack services todo` |
 | List Tasks | `docker stack ps todo` |
