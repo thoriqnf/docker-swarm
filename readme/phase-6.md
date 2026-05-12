@@ -1,51 +1,167 @@
-# 🐳 Phase 6: Secrets Management
+# 🐳 Phase 6 — Maximizing Swarm on a Single Machine
 
-In Phase 6, we secure our cluster by removing all plaintext passwords from our configuration files and using **Docker Secrets**. 
+> **Goal:** Transition from learning/simulation to a production-hardened single-node setup using Docker Stacks and Resource Management.
 
-## 🔐 1. Why Secrets?
+While Swarm is famous for multi-node clusters, it provides immense value even on a single machine. This phase focuses on **Stability**, **Resource Isolation**, and **Zero-Downtime Updates** using the professional `docker stack` workflow.
 
-In previous phases, passwords were visible in `docker-compose.prod.yml` or in environment variables. 
-- **Docker Secrets** are encrypted at rest on the manager nodes.
-- They are only transmitted to worker nodes that actually need them.
-- They are never written to disk on the worker nodes (mounted in-memory at `/run/secrets/`).
+---
 
-## 🛠️ 2. Creating Secrets
+## 🧹 0. Pre-deployment Cleanup
 
-Run these commands on your Manager node:
+Before starting Phase 6, ensure previous experiments are cleaned up to avoid port conflicts (like the "port 80 is already in use" error).
 
+### Remove the old stack
 ```bash
-# Create the secrets
-echo "todo_db" | docker secret create db_name -
-echo "todo_user" | docker secret create db_user -
-echo "secret_password" | docker secret create db_password -
-echo "root_secret" | docker secret create db_root_password -
-echo "redis_secret" | docker secret create redis_password -
-echo "base64:your_app_key" | docker secret create app_key -
-
-# Verify
-docker secret ls
+docker stack rm todo
 ```
+*(Wait a few seconds for the network and services to fully tear down)*
 
-## 🏗️ 3. Using Secrets in the Stack
-
-In the updated `docker-compose.prod.yml`, we now reference these secrets as `external: true`. Laravel and MySQL are configured to read their credentials from the files in `/run/secrets/`.
-
+### Stop local development containers
+If you still have the basic `docker compose` running from Phase 1, stop it:
 ```bash
-# Deploy the updated stack
-docker stack deploy -c docker-compose.prod.yml todo
+docker compose down
 ```
 
 ---
 
-## 🛠️ Summary of Raw Commands
+## ⚙️ 1. Why Swarm on Single Node?
 
-| Action | Command |
-|--------|---------|
-| Create Secret | `echo "val" | docker secret create <name> -` |
-| List Secrets | `docker secret ls` |
-| Remove Secret | `docker secret rm <name>` |
-| Inspect Secret | `docker secret inspect <name>` |
+Even without high availability across multiple physical servers, Swarm solves these critical problems:
+1.  **Auto-Healing**: If a container crashes, Swarm restarts it automatically.
+2.  **Resource Limits**: Prevents a single service (e.g., a memory leak in the API) from crashing the entire server.
+3.  **Zero-Downtime Updates**: Rolling updates allow you to deploy new versions without interrupting users.
+4.  **Forward Compatibility**: When you're ready to add a second server, your configuration doesn't need to change.
 
 ---
 
-> **Next Step**: Our cluster is secure and hardened. The final step is to automate the deployment and add visibility. In **Phase 7**, we'll set up **CI/CD and Observability**.
+## 📦 2. Docker Stack Workflow
+
+In production, we don't use `docker service create`. We use **Docker Stacks**, which allow us to define our entire environment in a single YAML file.
+
+### Step 1: Create Secrets
+Before deploying, we must create secrets for sensitive data like database passwords.
+```bash
+echo "your_secure_password" | docker secret create db_password -
+```
+<!-- ioe7a61c64j8gjecny1q9r9l9 -->
+
+### Step 2: Create the Stack File
+We have created a `docker-stack.yml` in the root directory. It includes:
+- **Resource Limits**: Hard caps on CPU and RAM.
+- **Reservations**: Guaranteed resources for each service.
+- **Update Config**: Instructions for `start-first` rolling updates.
+
+### Step 3: Deploy the Stack
+```bash
+# Deploy the stack (replaces 'docker compose up')
+docker stack deploy -c docker-stack.yml todo_app
+```
+
+### Step 3: Manage the Stack
+```bash
+# List all services in the stack
+docker stack services todo_app
+
+# View all running tasks (replicas)
+docker stack ps todo_app
+
+# Check resource usage real-time
+docker stats
+```
+
+---
+
+## 📊 3. Resource Planning (16 Core / 128GB Example)
+
+Based on **Module 8**, a well-planned node looks like this:
+
+| Component | CPU Limit | RAM Limit | Purpose |
+| :--- | :--- | :--- | :--- |
+| **Nginx** | 0.5c | 512MB | Reverse Proxy |
+| **API** (6x) | 1.5c | 4GB | Main Application Logic |
+| **Worker** (4x) | 1.0c | 4GB | Background Processing |
+| **Postgres** | 4.0c | 16GB | Database (Stateful) |
+| **Redis** | 1.0c | 8GB | Cache / Queue |
+
+> [!TIP]
+> Always leave **20-30% headroom** (buffer) for OS processes, spikes in traffic, and the "start-first" update phase where extra containers run temporarily.
+
+---
+
+## 🔄 4. Zero-Downtime Rolling Updates
+
+Our stack is configured to update replicas two at a time, starting new containers before stopping old ones:
+
+```yaml
+update_config:
+  parallelism: 2
+  order: start-first
+  failure_action: rollback
+  delay: 10s
+```
+
+To update your app, simply change the image tag in `docker-stack.yml` and run:
+```bash
+docker stack deploy -c docker-stack.yml todo_app
+```
+
+---
+
+## 🏷️ 5. Node Labels & Constraints
+
+Even on a single node, labels help you organize your workload. For example, pinning a database to a node with high-speed SSDs:
+
+```bash
+# Add a label to your manager node
+docker node update --label-add ssd=true manager1
+
+# Verify label
+docker node inspect manager1 --format '{{ .Spec.Labels }}'
+```
+
+The `docker-stack.yml` uses `placement.constraints` to ensure the database only runs on nodes labeled `ssd=true`.
+
+---
+
+## 🛠️ 6. Troubleshooting: Resource Scheduling
+
+If you notice that some replicas are stuck in `Pending` or `Rejected`, it's often due to **Resource Exhaustion**.
+
+### Check Service Status
+Use this command to see only the tasks that Swarm is currently trying to run:
+```bash
+docker service ps todo_app_app --filter "desired-state=running"
+```
+
+### Why are tasks Pending?
+For 4 replicas, if each has a 0.5 CPU / 1G RAM reservation, Swarm needs **2.0 CPU + 4G memory** reserved simultaneously. 
+A standard local machine (like `docker-desktop`) might not have enough free resources. In that case:
+- `app.1`  → Running ✅ (fits)
+- `app.2`  → Running ✅ (fits)
+- `app.3`  → Pending ❌ "no suitable node (insufficient...)"
+- `app.4`  → Pending ❌ "no suitable node (insufficient...)"
+
+### Q: Why do `\_` (Shutdown) entries still appear with `--filter running`?
+The filter is based on **desired state**, not actual state. Tasks .3 and .4 have `desired-state=Running` (Swarm *wants* them running), so they show up—but they're stuck `Pending` because there's nowhere to place them. The `\_` entries are previous attempts for .2, .3, .4 that briefly started before Swarm realized resources were exhausted.
+
+### Fix: Lowering Reservations
+In this phase, we chose to **lower the reservations** in `docker-stack.yml` to fit more replicas on a single machine:
+
+```yaml
+reservations:
+  cpus: "0.25"
+  memory: 512M
+```
+
+---
+
+## 📝 7. Key Takeaways
+- **Reservations** are for scheduling (guaranteed resources).
+- **Limits** are for enforcement (preventing resource hogs).
+- **Replicas** on a single node are used to utilize all CPU cores, not for HA.
+- **Docker Stack** is the industry-standard way to manage Swarm services.
+
+---
+
+### Next — Phase 7: CI/CD Pipeline
+Now that the production stack is ready, we will automate the entire process with GitHub Actions.

@@ -1,4 +1,10 @@
 .env
+# CI/CD Local Secrets
+.secrets
+deploy_key
+deploy_key.pub
+docker-stack.local.yml
+
 .env.*.local
 *.log
 .DS_Store
