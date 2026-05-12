@@ -1,9 +1,7 @@
 # =============================================================
-# docker-compose.prod.yml — Phase 5: Production Hardening
+# docker-compose.prod.yml — Phase 6: Secrets Management
 # =============================================================
-# Focus: 
-# 1. Resource Limits (CPU/RAM)
-# 2. Advanced Deployment Logic (failure action, monitor, order)
+# Focus: Secure credential handling using Docker Secrets.
 # =============================================================
 
 services:
@@ -25,8 +23,6 @@ services:
         limits:
           cpus: '0.50'
           memory: 128M
-      restart_policy:
-        condition: on-failure
 
   app:
     image: ${DOCKER_HUB_USER:-thorthedev}/${IMAGE_NAME:-todo-swarm-app}:latest
@@ -36,11 +32,13 @@ services:
       APP_DEBUG: "false"
       APP_URL: "http://localhost"
       DB_HOST: mysql
-      DB_DATABASE: ${DB_DATABASE:-todo_db}
-      DB_USERNAME: ${DB_USERNAME:-todo_user}
-      DB_PASSWORD: ${DB_PASSWORD:-secret}
       REDIS_HOST: redis
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-""}
+    secrets:
+      - db_name
+      - db_user
+      - db_password
+      - redis_password
+      - app_key
     volumes:
       - app_storage:/var/www/html/storage
     networks:
@@ -53,44 +51,40 @@ services:
         failure_action: rollback
         monitor: 30s
         order: start-first
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 512M
-      restart_policy:
-        condition: on-failure
 
   mysql:
     image: mysql:8.0
     environment:
-      MYSQL_DATABASE: ${DB_DATABASE:-todo_db}
-      MYSQL_USER: ${DB_USERNAME:-todo_user}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootsecret}
+      MYSQL_DATABASE_FILE: /run/secrets/db_name
+      MYSQL_USER_FILE: /run/secrets/db_user
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+    secrets:
+      - db_name
+      - db_user
+      - db_password
+      - db_root_password
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
       - todo_network
     deploy:
       replicas: 1
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 1G
 
   redis:
     image: redis:7-alpine
-    command: redis-server --requirepass ${REDIS_PASSWORD:-""}
+    command: >
+      sh -c '
+        redis-server --requirepass $$(cat /run/secrets/redis_password)
+      '
+    secrets:
+      - redis_password
     volumes:
       - redis_data:/data
     networks:
       - todo_network
     deploy:
       replicas: 1
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 256M
 
   horizon:
     image: ${DOCKER_HUB_USER:-thorthedev}/${IMAGE_NAME:-todo-swarm-app}:latest
@@ -98,15 +92,31 @@ services:
     environment:
       APP_ENV: production
       DB_HOST: mysql
-      DB_DATABASE: ${DB_DATABASE:-todo_db}
-      DB_USERNAME: ${DB_USERNAME:-todo_user}
-      DB_PASSWORD: ${DB_PASSWORD:-secret}
       REDIS_HOST: redis
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-""}
+    secrets:
+      - db_name
+      - db_user
+      - db_password
+      - redis_password
+      - app_key
     networks:
       - todo_network
     deploy:
       replicas: 1
+
+secrets:
+  db_name:
+    external: true
+  db_user:
+    external: true
+  db_password:
+    external: true
+  db_root_password:
+    external: true
+  redis_password:
+    external: true
+  app_key:
+    external: true
 
 volumes:
   mysql_data:
