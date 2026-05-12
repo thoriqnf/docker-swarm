@@ -23,7 +23,7 @@ services:
         condition: on-failure
 
   app:
-    image: thorthede/swarm-demo:1.0
+    image: thorthede/swarm-demo:${IMAGE_TAG:-latest}
     deploy:
       replicas: 4
       resources:
@@ -38,6 +38,11 @@ services:
         delay: 10s
         order: start-first
         failure_action: rollback
+        monitor: 20s
+      rollback_config:
+        parallelism: 2
+        delay: 5s
+        order: start-first
       restart_policy:
         condition: on-failure
 
