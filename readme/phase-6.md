@@ -6,6 +6,24 @@ While Swarm is famous for multi-node clusters, it provides immense value even on
 
 ---
 
+## 🧹 0. Pre-deployment Cleanup
+
+Before starting Phase 6, ensure previous experiments are cleaned up to avoid port conflicts (like the "port 80 is already in use" error).
+
+### Remove the old stack
+```bash
+docker stack rm todo
+```
+*(Wait a few seconds for the network and services to fully tear down)*
+
+### Stop local development containers
+If you still have the basic `docker compose` running from Phase 1, stop it:
+```bash
+docker compose down
+```
+
+---
+
 ## ⚙️ 1. Why Swarm on Single Node?
 
 Even without high availability across multiple physical servers, Swarm solves these critical problems:
@@ -25,6 +43,7 @@ Before deploying, we must create secrets for sensitive data like database passwo
 ```bash
 echo "your_secure_password" | docker secret create db_password -
 ```
+<!-- ioe7a61c64j8gjecny1q9r9l9 -->
 
 ### Step 2: Create the Stack File
 We have created a `docker-stack.yml` in the root directory. It includes:
@@ -104,7 +123,39 @@ The `docker-stack.yml` uses `placement.constraints` to ensure the database only 
 
 ---
 
-## 📝 6. Key Takeaways
+## 🛠️ 6. Troubleshooting: Resource Scheduling
+
+If you notice that some replicas are stuck in `Pending` or `Rejected`, it's often due to **Resource Exhaustion**.
+
+### Check Service Status
+Use this command to see only the tasks that Swarm is currently trying to run:
+```bash
+docker service ps todo_app_app --filter "desired-state=running"
+```
+
+### Why are tasks Pending?
+For 4 replicas, if each has a 0.5 CPU / 1G RAM reservation, Swarm needs **2.0 CPU + 4G memory** reserved simultaneously. 
+A standard local machine (like `docker-desktop`) might not have enough free resources. In that case:
+- `app.1`  → Running ✅ (fits)
+- `app.2`  → Running ✅ (fits)
+- `app.3`  → Pending ❌ "no suitable node (insufficient...)"
+- `app.4`  → Pending ❌ "no suitable node (insufficient...)"
+
+### Q: Why do `\_` (Shutdown) entries still appear with `--filter running`?
+The filter is based on **desired state**, not actual state. Tasks .3 and .4 have `desired-state=Running` (Swarm *wants* them running), so they show up—but they're stuck `Pending` because there's nowhere to place them. The `\_` entries are previous attempts for .2, .3, .4 that briefly started before Swarm realized resources were exhausted.
+
+### Fix: Lowering Reservations
+In this phase, we chose to **lower the reservations** in `docker-stack.yml` to fit more replicas on a single machine:
+
+```yaml
+reservations:
+  cpus: "0.25"
+  memory: 512M
+```
+
+---
+
+## 📝 7. Key Takeaways
 - **Reservations** are for scheduling (guaranteed resources).
 - **Limits** are for enforcement (preventing resource hogs).
 - **Replicas** on a single node are used to utilize all CPU cores, not for HA.

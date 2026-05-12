@@ -23,7 +23,7 @@ services:
         condition: on-failure
 
   app:
-    image: thorthede/swarm-demo:1.0
+    image: thorthedev/swarm-demo:1.0
     deploy:
       replicas: 4
       resources:
@@ -31,8 +31,8 @@ services:
           cpus: "1.0"
           memory: 2G
         reservations:
-          cpus: "0.5"
-          memory: 1G
+          cpus: "0.25"
+          memory: 512M
       update_config:
         parallelism: 2
         delay: 10s
