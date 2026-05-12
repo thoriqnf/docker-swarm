@@ -28,7 +28,7 @@ docker secret ls
 
 ## 🏗️ 3. Using Secrets in the Stack
 
-In `docker-compose.prod.yml`, we now reference these secrets as `external: true`. Laravel and MySQL are configured to read their credentials from the files in `/run/secrets/`.
+In the updated `docker-compose.prod.yml`, we now reference these secrets as `external: true`. Laravel and MySQL are configured to read their credentials from the files in `/run/secrets/`.
 
 ```bash
 # Deploy the updated stack
@@ -37,7 +37,7 @@ docker stack deploy -c docker-compose.prod.yml todo
 
 ---
 
-## 🛠️ Summary of Phase 6 Commands
+## 🛠️ Summary of Raw Commands
 
 | Action | Command |
 |--------|---------|

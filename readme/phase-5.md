@@ -18,10 +18,10 @@ resources:
 We automate the safety checks that we performed manually in Phase 4.
 
 ### A. Failure Action: Rollback
-If a new container fails to start or fails its health check, Swarm will **automatically revert** to the previous version.
+If a new version of your app fails its health check during an update, Swarm will **automatically stop the update and roll back** to the previous working version.
 
 ### B. Start-First Order
-Instead of stopping the old version before starting the new one (causing downtime), we start the new version **first**, wait for it to be healthy, and only then stop the old one.
+Instead of stopping the old container then starting the new one (which causes a tiny gap in service), we **start the new one first**, verify it's healthy, and only then stop the old one.
 
 ```yaml
 update_config:
@@ -37,7 +37,7 @@ update_config:
 ## 🚀 3. Deploying the Hardened Stack
 
 ```bash
-# 1. Deploy using the production stack file
+# 1. Deploy using the production file
 docker stack deploy -c docker-compose.prod.yml todo
 
 # 2. Inspect the resource limits on a running task
@@ -46,7 +46,7 @@ docker inspect <container_id> --format='{{json .HostConfig.NanoCpus}}'
 
 ---
 
-## 🛠️ Summary of Phase 5 Commands
+## 🛠️ Summary of Raw Commands
 
 | Action | Command |
 |--------|---------|
