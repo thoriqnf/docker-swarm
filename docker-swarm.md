@@ -87,3 +87,23 @@
 | Day 2 | 5 | Hardening | Resource limits |
 | Day 2 | 6 | Secrets | Security |
 | Day 2 | 7 | Automation/Monitor | CI/CD & Portainer |
+
+---
+
+## 🛠️ Troubleshooting: Fresh Start
+If you encounter "already exists" errors or want to reset your environment entirely, run these commands:
+
+```bash
+# 1. Remove the Swarm stack
+docker stack rm todo 2>/dev/null
+
+# 2. Leave the Swarm (Reset local node)
+docker swarm leave --force 2>/dev/null
+
+# 3. Cleanup Phase 5 DinD resources
+docker rm -f manager1 worker1 worker2 2>/dev/null
+docker network rm swarm-demo 2>/dev/null
+
+# 4. Cleanup any leftover volumes
+docker volume prune -f
+```
