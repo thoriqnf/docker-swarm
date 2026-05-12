@@ -89,8 +89,12 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
-    ports:
-      - "3306:3306"
+    # ----------------------------------------------------------
+    # For security: Comment out ports if deploying to a VPS
+    # to prevent external access to the database.
+    # ----------------------------------------------------------
+    # ports:
+    #   - "3306:3306"
     networks:
       - todo_network
     healthcheck:
@@ -115,8 +119,12 @@ services:
       --save ""
     volumes:
       - redis_data:/data
-    ports:
-      - "6379:6379"
+    # ----------------------------------------------------------
+    # For security: Comment out ports if deploying to a VPS
+    # to prevent external access to Redis.
+    # ----------------------------------------------------------
+    # ports:
+    #   - "6379:6379"
     networks:
       - todo_network
     healthcheck:
