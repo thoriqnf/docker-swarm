@@ -40,6 +40,7 @@ services:
       APP_ENV: local
       APP_DEBUG: "true"
       APP_URL: "http://localhost"
+      APP_KEY: "base64:XG8Pq/8X996S9V8K9P9K9P9K9P9K9P9K9P9K9P9K9P8="
       LOG_CHANNEL: stderr
       LOG_LEVEL: debug
       DB_CONNECTION: mysql
@@ -65,11 +66,11 @@ services:
     networks:
       - todo_network
     healthcheck:
-      test: ["CMD-SHELL", "pidof php-fpm || exit 1"]
+      test: ["CMD", "nc", "-z", "localhost", "9000"]
       interval: 10s
       timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 30s
     restart: unless-stopped
 
   # ----------------------------------------------------------
