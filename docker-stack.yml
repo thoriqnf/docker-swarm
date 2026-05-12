@@ -1,0 +1,91 @@
+version: "3.8"
+
+services:
+  nginx:
+    image: nginx:stable-alpine
+    ports:
+      - "80:80"
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+        failure_action: rollback
+      restart_policy:
+        condition: on-failure
+
+  app:
+    image: thorthedev/swarm-demo:${IMAGE_TAG:-latest}
+    deploy:
+      replicas: 4
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
+        reservations:
+          cpus: "0.25"
+          memory: 512M
+      update_config:
+        parallelism: 2
+        delay: 10s
+        order: start-first
+        failure_action: rollback
+        monitor: 20s
+      rollback_config:
+        parallelism: 2
+        delay: 5s
+        order: start-first
+      restart_policy:
+        condition: on-failure
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    secrets:
+      - db_password
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.ssd == true
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4G
+        reservations:
+          cpus: "1.0"
+          memory: 2G
+      restart_policy:
+        condition: on-failure
+
+  redis:
+    image: redis:7-alpine
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 1G
+        reservations:
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+
+volumes:
+  db_data:
+    driver: local
+
+secrets:
+  db_password:
+    external: true
