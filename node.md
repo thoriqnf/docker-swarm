@@ -1,7 +1,7 @@
 Worker
 
-docker swarm join --token SWMTKN-1-43wbqeyl30theiuei4fgdofv72mbwek4uzzcqwrep82g42um7c-7fa3qs8y5f5cq7p8gnuozp6lv 192.168.65.3:2377
+docker swarm join --token SWMTKN-1-56xudozpeq6wg8ehb8spyosewdardwzmhtow7c7ra4s205i8ns-52vmg4b4r8dp42k2ao6ke8mis 10.0.1.10:2377
 
 Manager
 
-docker swarm join --token SWMTKN-1-43wbqeyl30theiuei4fgdofv72mbwek4uzzcqwrep82g42um7c-7hgsw9h1rb1qo3iqmu87qvvwl 192.168.65.3:2377
+docker swarm join --token SWMTKN-1-56xudozpeq6wg8ehb8spyosewdardwzmhtow7c7ra4s205i8ns-1ypcnfdf1g5aja0tubgxeij35 10.0.1.10:2377
