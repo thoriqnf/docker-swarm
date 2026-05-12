@@ -57,6 +57,7 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-""}
     volumes:
       - ./src:/var/www/html
+      - /var/www/html/vendor
       - app_storage:/var/www/html/storage
     depends_on:
       mysql:
@@ -66,11 +67,11 @@ services:
     networks:
       - todo_network
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "9000"]
+      test: ["CMD", "nc", "-z", "127.0.0.1", "9000"]
       interval: 10s
       timeout: 5s
-      retries: 3
-      start_period: 30s
+      retries: 5
+      start_period: 60s
     restart: unless-stopped
 
   # ----------------------------------------------------------
@@ -149,6 +150,7 @@ services:
       LOG_CHANNEL: stderr
     volumes:
       - ./src:/var/www/html
+      - /var/www/html/vendor
     depends_on:
       mysql:
         condition: service_healthy
