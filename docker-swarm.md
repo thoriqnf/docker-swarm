@@ -1,24 +1,16 @@
 # 🐳 Laravel Todo CRUD — Docker Swarm Demo Plan
 
-## Swarm Topology (5 Nodes)
+## Tech Stack Decision
 
-```
-┌─────────────────────────────────────────────────┐
-│              Docker Swarm Cluster                │
-│                                                  │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐      │
-│  │ manager1 │  │ manager2 │  │ manager3 │      │
-│  │ (leader) │  │ (manager)│  │ (manager)│      │
-│  └──────────┘  └──────────┘  └──────────┘      │
-│       ↑ Raft Quorum (need 2/3 alive)             │
-│                                                  │
-│  ┌──────────┐  ┌──────────┐                     │
-│  │ worker1  │  │ worker2  │                     │
-│  └──────────┘  └──────────┘                     │
-│                                                  │
-│  Quorum = (5/2)+1 = 3 → can lose 2 managers     │
-└─────────────────────────────────────────────────┘
-```
+| Layer | Choice | Reason |
+|---|---|---|
+| Laravel | **v12** | Latest stable |
+| PHP | **8.4-fpm** | LTS, best performance |
+| Web Server | **Nginx** | Industry standard |
+| Database | **MySQL 8** | Industry standard |
+| Cache/Queue | **Redis 7** | Required for Horizon |
+| Monitoring | **Portainer CE** | Visual Swarm management |
+| CI/CD | **GitHub Actions** | Most widely used |
 
 ---
 
@@ -29,11 +21,35 @@
 ## Phase 1 — Laravel App + Docker Compose
 > **Goal:** Fresh Laravel 12 app running locally with full Docker Compose stack
 
+### 1.1 ✅ Deliverables
+- [ ] `docker compose up` → app running at `localhost:80`
+- [ ] Auth working (Breeze)
+- [ ] Queue job fires on todo creation
+
+---
+
 ## Phase 2 — Docker Swarm: Basic Init
-> **Goal:** Get Swarm initialized and first stack deployed — understand nodes, services, tasks
+> **Goal:** Get Swarm initialized and first stack deployed
+
+---
 
 ## Phase 3 — Orchestration & Self-Healing
-> **Goal:** Demonstrate Swarm's internal cluster logic — promote/demote, quorum, and manual recovery
+> **Goal:** Demonstrate Swarm's internal cluster logic — roles, quorum, and manual recovery
+
+### 3.1 Key Concepts
+- **Promote/Demote**: Turning workers into managers.
+- **Drain**: Safe node maintenance.
+- **Self-Healing**: Manual container kills and auto-recovery.
+
+---
+
+## Phase 4 — Scaling, Rolling Updates & Rollbacks
+> **Goal:** Manage dynamic capacity and handle software updates with zero downtime
+
+### 4.1 Features
+- **Horizontal Scaling**: `docker service scale todo_app=10`.
+- **Rolling Update**: `docker service update --image v2`.
+- **Manual Rollback**: `docker service rollback`.
 
 ---
 
@@ -41,14 +57,19 @@
 
 ---
 
-## Phase 4 — Scaling, Rolling Updates & Rollbacks
-> **Goal:** Manage dynamic capacity and handle software updates with zero downtime
-
 ## Phase 5 — Production Hardening (Optimization)
-> **Goal:** Add resource limits and advanced deployment logic (start-first, failure-rollback)
+> **Goal:** Add resource limits and advanced deployment logic
+
+### 5.1 Optimization
+- **Resource Limits**: CPU and Memory constraints.
+- **Deployment Strategy**: `start-first` order and failure monitoring.
+
+---
 
 ## Phase 6 — Secrets Management
 > **Goal:** Move all plaintext environment variables to secure Docker Secrets
+
+---
 
 ## Phase 7 — CI/CD & Observability
 > **Goal:** Automate deployments with GitHub Actions and monitor with Portainer
@@ -62,7 +83,7 @@
 | Day 1 | 1 | Laravel + Compose | Local development |
 | Day 1 | 2 | Swarm Init | Cluster setup |
 | Day 1 | 3 | Orchestration | Roles & Self-healing |
-| Day 2 | 4 | Scale & Rollback | Capacity & Updates |
+| Day 1 | 4 | Scale & Rollback | Capacity & Updates |
 | Day 2 | 5 | Hardening | Resource limits |
 | Day 2 | 6 | Secrets | Security |
 | Day 2 | 7 | Automation/Monitor | CI/CD & Portainer |
