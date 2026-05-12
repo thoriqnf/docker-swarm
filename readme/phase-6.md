@@ -20,13 +20,19 @@ Even without high availability across multiple physical servers, Swarm solves th
 
 In production, we don't use `docker service create`. We use **Docker Stacks**, which allow us to define our entire environment in a single YAML file.
 
-### Step 1: Create the Stack File
+### Step 1: Create Secrets
+Before deploying, we must create secrets for sensitive data like database passwords.
+```bash
+echo "your_secure_password" | docker secret create db_password -
+```
+
+### Step 2: Create the Stack File
 We have created a `docker-stack.yml` in the root directory. It includes:
 - **Resource Limits**: Hard caps on CPU and RAM.
 - **Reservations**: Guaranteed resources for each service.
 - **Update Config**: Instructions for `start-first` rolling updates.
 
-### Step 2: Deploy the Stack
+### Step 3: Deploy the Stack
 ```bash
 # Deploy the stack (replaces 'docker compose up')
 docker stack deploy -c docker-stack.yml todo_app
