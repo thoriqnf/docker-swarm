@@ -59,6 +59,7 @@ services:
       - ./src:/var/www/html
       - /var/www/html/vendor
       - app_storage:/var/www/html/storage
+      - app_cache:/var/www/html/bootstrap/cache
     depends_on:
       mysql:
         condition: service_healthy
@@ -151,6 +152,8 @@ services:
     volumes:
       - ./src:/var/www/html
       - /var/www/html/vendor
+      - app_storage:/var/www/html/storage
+      - app_cache:/var/www/html/bootstrap/cache
     depends_on:
       mysql:
         condition: service_healthy
@@ -169,6 +172,8 @@ volumes:
   redis_data:
     driver: local
   app_storage:
+    driver: local
+  app_cache:
     driver: local
 
 # =============================================================
