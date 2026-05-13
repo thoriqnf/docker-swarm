@@ -20,7 +20,24 @@ Host Machine (Docker Desktop)
 
 ---
 
-## 🚀 2. Step-by-Step Implementation
+## 🛠️ 2. Pre-requisites & Installation
+
+Before starting this demo, you need to ensure your host machine is ready to run nested Docker containers.
+
+### 1. Pull the DinD Image
+The `docker:dind` image contains a full Docker installation inside a lightweight Alpine container.
+```bash
+docker pull docker:dind
+```
+
+### 2. Understanding --privileged
+Running Docker-in-Docker requires the `--privileged` flag. This gives the container access to the host's kernel features required to run a nested container engine. 
+> [!CAUTION]
+> **Security Note:** Never use `--privileged` in production unless you absolutely have to (e.g., for CI/CD runners). It bypasses most container security boundaries.
+
+---
+
+## 🚀 3. Step-by-Step Implementation
 
 ### Step 0: Fresh Start (Optional)
 If you have run this demo before or see "already exists" errors, run this to clear your environment:
@@ -68,7 +85,7 @@ docker run -d --privileged --name worker2 --hostname worker2 --network swarm-dem
 
    > [!WARNING]
    > **Error: "This node is not a swarm manager"**?
-   > This means the `docker swarm init` in Step 2 failed or didn't run. 
+   > This means the `docker swarm init` in Step 3 failed or didn't run. 
    > 1. Verify your IP: `echo $MANAGER_IP` (should not be empty).
    > 2. Manually run the init: `docker exec manager1 docker swarm init --advertise-addr <YOUR_MANAGER_IP>`.
    > 3. Verify manager status: `docker exec manager1 docker node ls`.
@@ -89,7 +106,7 @@ You should see 3 nodes: `manager1` (Leader), `worker1` (Ready), and `worker2` (R
 
 ---
 
-## 🖼️ 3. Image Distribution (Docker Hub)
+## 🖼️ 4. Image Distribution (Docker Hub)
 
 Since each DinD container has its own isolated image store, they cannot "see" images built on your host machine. We must use a registry (Docker Hub) so every node can pull the same image.
 
@@ -139,7 +156,7 @@ Since each DinD container has its own isolated image store, they cannot "see" im
 
 ---
 
-## ⚡ 4. Live Demo: HA & Self-Healing
+## ⚡ 5. Live Demo: HA & Self-Healing
 
 ### Test the Routing Mesh
 Run this multiple times. Swarm will balance the requests across all 3 nodes. Since we are using Nginx, you will see the HTML source of the "Welcome to nginx!" page:
@@ -169,7 +186,7 @@ docker exec manager1 wget -qO- http://$MANAGER_IP:8080
 
 ---
 
-## ⚠️ 5. Why DinD is NOT for Production
+## ⚠️ 6. Why DinD is NOT for Production
 - **Privileged Mode**: Gives the container full access to the host kernel (Security Risk).
 - **No Real Isolation**: One host failure kills the whole "cluster".
 - **Non-Persistent**: Data is lost when containers are removed.
@@ -177,7 +194,7 @@ docker exec manager1 wget -qO- http://$MANAGER_IP:8080
 
 ---
 
-## 🧹 6. Cleanup
+## 🧹 7. Cleanup
 To stop the demo and free up resources:
 ```bash
 docker rm -f manager1 worker1 worker2
