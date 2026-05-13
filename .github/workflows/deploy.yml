@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 env:
-  IMAGE: thorthede/swarm-demo
+  IMAGE: thorthedev/swarm-demo
 
 jobs:
   # ── Stage 1: Test ───────────────────────────────────────────
