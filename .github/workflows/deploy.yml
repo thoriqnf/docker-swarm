@@ -69,10 +69,18 @@ jobs:
             echo "$GATEWAY_IP host.docker.internal" | sudo tee -a /etc/hosts
           fi
 
+      - name: Prepare SSH Key
+        run: |
+          # Clean quotes and convert \n literals to real newlines
+          CLEAN_KEY=$(echo "${{ secrets.DEPLOY_SSH_KEY }}" | sed 's/^"//;s/"$//' | sed 's/\\n/\n/g')
+          echo "CLEAN_SSH_KEY<<EOF" >> $GITHUB_ENV
+          echo "$CLEAN_KEY" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.9.0
         with:
-          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+          ssh-private-key: ${{ env.CLEAN_SSH_KEY }}
 
       - name: Debug connectivity
         run: |
