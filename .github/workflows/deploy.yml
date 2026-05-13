@@ -71,14 +71,14 @@ jobs:
 
       - name: Copy stack file to server
         run: |
-          scp docker-stack.yml \
+          scp -T docker-stack.yml \
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/tmp/stack-deploy.yml
 
       - name: Deploy stack to Swarm
         env:
           IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
         run: |
-          ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << EOF
+          ssh -T ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << EOF
             # Login to Docker Hub so nodes can pull the image
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | \
               docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
@@ -96,7 +96,7 @@ jobs:
 
       - name: Verify deployment convergence
         run: |
-          ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'EOF'
+          ssh -T ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'EOF'
             TIMEOUT=120
             ELAPSED=0
             INTERVAL=10
@@ -129,7 +129,7 @@ jobs:
         if: failure()
         run: |
           echo "🔄 Deployment failed — triggering manual rollback..."
-          ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'EOF'
+          ssh -T ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'EOF'
             for service in $(docker stack services todo_app --format "{{.Name}}"); do
               echo "Rolling back $service..."
               docker service rollback $service || true
