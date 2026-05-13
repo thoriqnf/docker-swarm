@@ -27,8 +27,16 @@ load_secret "redis_password" "REDIS_PASSWORD"
 
 # ---- Run Laravel bootstrap tasks on app container only ----
 if [ "$1" = "php-fpm" ]; then
-    echo "[entrypoint] Waiting for MySQL to be ready..."
-    until php -r "new PDO('mysql:host=${DB_HOST:-mysql};dbname=${DB_DATABASE}', '${DB_USERNAME}', '${DB_PASSWORD}');" 2>/dev/null; do
+    echo "[entrypoint] Waiting for ${DB_CONNECTION:-pgsql} to be ready at ${DB_HOST:-100.66.190.92}..."
+    
+    # Construct PDO DSN based on connection type
+    if [ "${DB_CONNECTION}" = "pgsql" ]; then
+        DSN="pgsql:host=${DB_HOST};port=${DB_PORT:-5432};dbname=${DB_DATABASE}"
+    else
+        DSN="mysql:host=${DB_HOST:-mysql};port=${DB_PORT:-3306};dbname=${DB_DATABASE}"
+    fi
+
+    until php -r "new PDO('${DSN}', '${DB_USERNAME}', '${DB_PASSWORD}');" 2>/dev/null; do
         sleep 2
         echo "[entrypoint] Waiting for database..."
     done

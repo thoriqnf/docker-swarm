@@ -50,6 +50,7 @@ RUN apk add --no-cache \
     unzip \
     shadow \
     mysql-client \
+    postgresql-dev \
     icu-dev \
     oniguruma-dev
 
@@ -57,6 +58,7 @@ RUN apk add --no-cache \
 RUN docker-php-ext-install \
     pdo \
     pdo_mysql \
+    pdo_pgsql \
     mbstring \
     exif \
     pcntl \

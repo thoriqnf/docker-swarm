@@ -48,19 +48,18 @@ services:
     environment:
       APP_NAME: "Todo Swarm"
       # ${VAR:-default} means: use the VAR from your system, or "todo_db" if it's missing
-      DB_DATABASE: ${DB_DATABASE:-todo_db}
       APP_ENV: local
       APP_DEBUG: "true"
       APP_URL: "http://localhost"
       APP_KEY: "base64:XG8Pq/8X996S9V8K9P9K9P9K9P9K9P9K9P9K9P9K9P8="
       LOG_CHANNEL: stderr
       LOG_LEVEL: debug
-      DB_CONNECTION: mysql
-      DB_HOST: mysql
-      DB_PORT: 3306
+      DB_CONNECTION: ${DB_CONNECTION:-pgsql}
+      DB_HOST: ${DB_HOST:-100.66.190.92}
+      DB_PORT: ${DB_PORT:-5432}
       DB_DATABASE: ${DB_DATABASE:-todo_db}
-      DB_USERNAME: ${DB_USERNAME:-todo_user}
-      DB_PASSWORD: ${DB_PASSWORD:-secret}
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-changeme}
       CACHE_STORE: redis
       SESSION_DRIVER: redis
       QUEUE_CONNECTION: redis
@@ -73,8 +72,6 @@ services:
       - app_storage:/var/www/html/storage
       - app_cache:/var/www/html/bootstrap/cache
     depends_on:
-      mysql:
-        condition: service_healthy
       redis:
         condition: service_healthy
     networks:
@@ -87,38 +84,6 @@ services:
       start_period: 60s
     restart: unless-stopped
 
-  # ----------------------------------------------------------
-  # MySQL 8 — Primary database
-  # ----------------------------------------------------------
-  # MySQL — Primary relational database storage
-  mysql:
-    image: mysql:8.0
-    container_name: todo_mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootsecret}
-      MYSQL_DATABASE: ${DB_DATABASE:-todo_db}
-      MYSQL_USER: ${DB_USERNAME:-todo_user}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
-    # ----------------------------------------------------------
-    # For security: Comment out ports if deploying to a VPS
-    # to prevent external access to the database.
-    # ----------------------------------------------------------
-    # ports:
-    #   - "3306:3306"
-    networks:
-      - todo_network
-    # healthcheck: Periodically checks if the database is actually ready to accept connections
-    healthcheck:
-      # test: The command to run (mysqladmin ping) to verify the service is alive
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-rootsecret}"]
-      interval: 10s    # How often to run the check
-      timeout: 5s     # How long to wait for a response
-      retries: 5      # Number of failures before marking as "unhealthy"
-      start_period: 30s # Wait 30s before starting checks (gives DB time to boot)
-    restart: unless-stopped
 
   # ----------------------------------------------------------
   # Redis 7 — Cache, sessions & queue broker
@@ -164,12 +129,12 @@ services:
     command: php artisan horizon
     environment:
       APP_ENV: local
-      DB_CONNECTION: mysql
-      DB_HOST: mysql
-      DB_PORT: 3306
+      DB_CONNECTION: ${DB_CONNECTION:-pgsql}
+      DB_HOST: ${DB_HOST:-100.66.190.92}
+      DB_PORT: ${DB_PORT:-5432}
       DB_DATABASE: ${DB_DATABASE:-todo_db}
-      DB_USERNAME: ${DB_USERNAME:-todo_user}
-      DB_PASSWORD: ${DB_PASSWORD:-secret}
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-changeme}
       QUEUE_CONNECTION: redis
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -181,8 +146,6 @@ services:
       - app_storage:/var/www/html/storage
       - app_cache:/var/www/html/bootstrap/cache
     depends_on:
-      mysql:
-        condition: service_healthy
       redis:
         condition: service_healthy
     networks:
@@ -193,8 +156,6 @@ services:
 # Volumes
 # =============================================================
 volumes:
-  mysql_data:
-    driver: local
   redis_data:
     driver: local
   app_storage:

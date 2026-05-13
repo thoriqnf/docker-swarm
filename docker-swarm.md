@@ -28,6 +28,14 @@
 
 ---
 
+## Phase 1-DB — External Database Migration
+> **Goal:** Transition from local MySQL container to external PostgreSQL
+- [ ] Connect to external host `100.66.190.92`
+- [ ] Configure `pdo_pgsql` driver in Docker image
+- [ ] Verify migrations on external DB
+
+---
+
 ## Phase 2 — Docker Swarm: Basic Init
 > **Goal:** Get Swarm initialized and first stack deployed
 
@@ -81,6 +89,7 @@
 | Day | Phase | Focus | Key Demo |
 |---|---|---|---|
 | Day 1 | 1 | Laravel + Compose | Local development |
+| Day 1 | 1-DB | External DB | Managed PostgreSQL |
 | Day 1 | 2 | Swarm Init | Cluster setup |
 | Day 1 | 3 | Orchestration | Roles & Self-healing |
 | Day 1 | 4 | Scale & Rollback | Capacity & Updates |
