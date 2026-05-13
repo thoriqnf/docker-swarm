@@ -74,19 +74,28 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
 
+      - name: Debug connectivity
+        run: |
+          echo "Checking reachability of ${{ secrets.DEPLOY_HOST }}..."
+          ping -c 1 ${{ secrets.DEPLOY_HOST }} || echo "Ping failed"
+          # Try to see if port 22 is open (timeout 5s)
+          timeout 5 bash -c "</dev/tcp/${{ secrets.DEPLOY_HOST }}/22" && echo "✅ Port 22 is open" || echo "❌ Port 22 is closed or unreachable"
+
       - name: Add server to known hosts
-        run: ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+        run: ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts || true
 
       - name: Copy stack file to server
         run: |
-          scp -T docker-stack.yml \
+          scp -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+            docker-stack.yml \
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/tmp/stack-deploy.yml
 
       - name: Deploy stack to Swarm
         env:
           IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
         run: |
-          ssh -T ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << EOF
+          ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << EOF
             # Login to Docker Hub so nodes can pull the image
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | \
               docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
@@ -104,7 +113,8 @@ jobs:
 
       - name: Verify deployment convergence
         run: |
-          ssh -T ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'EOF'
+          ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'EOF'
             TIMEOUT=120
             ELAPSED=0
             INTERVAL=10
@@ -137,7 +147,8 @@ jobs:
         if: failure()
         run: |
           echo "🔄 Deployment failed — triggering manual rollback..."
-          ssh -T ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'EOF'
+          ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'EOF'
             for service in $(docker stack services todo_app --format "{{.Name}}"); do
               echo "Rolling back $service..."
               docker service rollback $service || true
